@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Position Size Calculator</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f4f7fb; --card: #fff; --text: #172b4d; --muted: #64748b;
+    --line: #dce5f0; --green: #078451; --blue: #0868cc;
+    --purple: #7536c8; --red: #be3548;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { width: min(1080px, 100% - 32px); margin: 32px auto 48px; }
+  header { text-align: center; margin-bottom: 26px; }
+  h1 { margin: 0 0 8px; font-size: clamp(25px, 4vw, 34px); letter-spacing: -.7px; }
+  header p { color: var(--muted); margin: 0 auto; max-width: 680px; font-size: 14px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 15px; padding: 22px; box-shadow: 0 5px 20px #223b5b08; }
+  .inputs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+  .hint { color: var(--muted); font-size: 12px; min-height: 18px; margin-bottom: 9px; }
+  .inputbox { display: flex; align-items: center; border: 1px solid #cad7e6; border-radius: 9px; background: #fff; padding: 0 12px; transition: border-color .15s, box-shadow .15s; }
+  .inputbox:focus-within { border-color: #458de0; box-shadow: 0 0 0 3px #458de01c; }
+  input { width: 100%; min-width: 0; border: 0; outline: 0; padding: 12px 0; font: inherit; font-size: 16px; color: var(--text); background: transparent; }
+  .suffix { color: #73849c; font-size: 14px; padding-left: 8px; }
+  .results { margin-top: 18px; padding: 22px; border: 1px solid #c5eadb; background: linear-gradient(140deg, #f3fcf8, #f8fbff); border-radius: 15px; }
+  h2 { font-size: 18px; margin: 0 0 16px; letter-spacing: -.2px; }
+  .result-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .result { min-height: 125px; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 15px; }
+  .result-label { font-size: 13px; color: #52647d; display: flex; gap: 8px; align-items: center; min-height: 36px; }
+  .dot { width: 27px; height: 27px; border-radius: 9px; display: inline-grid; place-items: center; font-weight: 800; flex-shrink: 0; }
+  .value { margin-top: 12px; font-size: clamp(23px, 3vw, 30px); font-weight: 800; letter-spacing: -.8px; overflow-wrap: anywhere; }
+  .green { border-color: #b5ead6; } .green .dot { color: var(--green); background: #e1f7ed; } .green .value { color: var(--green); }
+  .blue { border-color: #c3ddff; } .blue .dot { color: var(--blue); background: #e4f0ff; } .blue .value { color: var(--blue); }
+  .purple { border-color: #dfcffb; } .purple .dot { color: var(--purple); background: #f1e9ff; } .purple .value { color: var(--purple); }
+  .red { border-color: #ffd0d6; } .red .dot { color: var(--red); background: #ffeaed; } .red .value { color: var(--red); }
+  .notes { margin-top: 14px; border: 1px solid #c7dfff; border-radius: 12px; background: #f3f8ff; padding: 15px 17px; color: #4e6380; font-size: 13px; }
+  .notes strong { display: block; color: #174c8d; font-size: 14px; margin-bottom: 5px; }
+  .notes ul { margin: 0; padding-left: 18px; } .notes li + li { margin-top: 3px; }
+  .formula { margin-top: 22px; }
+  .formula-row { display: grid; grid-template-columns: 1.1fr 1fr 1fr; align-items: center; gap: 14px; padding: 15px 4px; border-top: 1px solid #e5edf5; }
+  .formula-row:first-of-type { border-top: 0; }
+  .formula-name { font-weight: 700; font-size: 14px; }
+  .equation { text-align: center; font-family: Georgia, serif; font-size: 19px; font-style: italic; }
+  .definition { font-size: 12px; color: var(--muted); }
+  .warning { margin-top: 14px; font-size: 12px; color: #64748b; }
+  .error { color: var(--red); font-size: 13px; margin-top: 10px; display: none; }
+  @media (max-width: 760px) {
+    .wrap { width: min(100% - 22px, 560px); margin: 22px auto 30px; }
+    .panel, .results { padding: 16px; }
+    .inputs { grid-template-columns: 1fr; gap: 14px; }
+    .hint { min-height: 0; }
+    .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+    .result { padding: 12px; min-height: 112px; }
+    .result-label { font-size: 12px; min-height: 38px; align-items: flex-start; }
+    .value { font-size: 24px; }
+    .formula-row { grid-template-columns: 1fr auto; gap: 8px; padding: 13px 0; }
+    .equation { text-align: right; font-size: 17px; }
+    .definition { grid-column: 1 / -1; }
+  }
+  @media (max-width: 360px) {
+    .result-grid { grid-template-columns: 1fr; }
+    .result { min-height: 95px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>Position Size Calculator</h1>
+    <p>Tính đòn bẩy, vốn ký quỹ và giá trị vị thế (VOL) theo mức Stop Loss và số tiền bạn chấp nhận mất.</p>
+  </header>
+
+  <section class="panel" aria-label="Thông số đầu vào">
+    <div class="inputs">
+      <div>
+        <label for="sl">SL (%)</label>
+        <div class="hint">Khoảng cách từ giá vào lệnh đến Stop Loss</div>
+        <div class="inputbox"><input id="sl" type="number" min="0.001" step="any" value="0.25" inputmode="decimal"><span class="suffix">%</span></div>
+      </div>
+      <div>
+        <label for="risk">Số tiền chấp nhận mất</label>
+        <div class="hint">Mức lỗ dự kiến khi chạm SL</div>
+        <div class="inputbox"><input id="risk" type="number" min="0.01" step="any" value="50" inputmode="decimal"><span class="suffix">$</span></div>
+      </div>
+      <div>
+        <label for="capital">Vốn tối đa có thể vào</label>
+        <div class="hint">Giới hạn ký quỹ bạn có thể dùng</div>
+        <div class="inputbox"><input id="capital" type="number" min="1" step="any" value="4000" inputmode="decimal"><span class="suffix">$</span></div>
+      </div>
+    </div>
+    <div class="error" id="error" role="alert">Vui lòng nhập các giá trị lớn hơn 0.</div>
+  </section>
+
+  <section class="results" aria-live="polite">
+    <h2>Kết quả đề xuất</h2>
+    <div class="result-grid">
+      <article class="result green">
+        <div class="result-label"><span class="dot">↗</span> Đòn bẩy đề xuất</div>
+        <div class="value" id="leverage">5x</div>
+      </article>
+      <article class="result blue">
+        <div class="result-label"><span class="dot">▤</span> Vốn ký quỹ cần dùng</div>
+        <div class="value" id="margin">$4,000</div>
+      </article>
+      <article class="result purple">
+        <div class="result-label"><span class="dot">◫</span> Giá trị vị thế (VOL)</div>
+        <div class="value" id="position">$20,000</div>
+      </article>
+      <article class="result red">
+        <div class="result-label"><span class="dot">!</span> Lỗ dự kiến khi chạm SL</div>
+        <div class="value" id="actualRisk">$50</div>
+      </article>
+    </div>
+    <div class="notes">
+      <strong>ⓘ Lưu ý</strong>
+      <ul>
+        <li>Đòn bẩy được tự động làm tròn <b>lên</b> thành số nguyên để vốn ký quỹ không vượt giới hạn.</li>
+        <li>VOL = số tiền chấp nhận mất ÷ (SL% / 100).</li>
+        <li>Chưa tính phí giao dịch, trượt giá và funding; lỗ thực tế có thể cao hơn.</li>
+        <li>Đòn bẩy là thông số khuếch đại vị thế, không làm thay đổi mức lỗ theo SL nếu khối lượng vị thế giữ nguyên.</li>
+      </ul>
+    </div>
+    <div class="warning" id="status"></div>
+  </section>
+
+  <section class="panel formula">
+    <h2>Công thức tính</h2>
+    <div class="formula-row">
+      <div class="formula-name">1. Giá trị vị thế (VOL)</div>
+      <div class="equation">VOL = R ÷ (SL% / 100)</div>
+      <div class="definition">R: số tiền chấp nhận mất<br>SL%: khoảng cách Stop Loss</div>
+    </div>
+    <div class="formula-row">
+      <div class="formula-name">2. Đòn bẩy nguyên</div>
+      <div class="equation">L = ⌈ VOL ÷ C ⌉</div>
+      <div class="definition">C: vốn tối đa có thể vào<br>L: đòn bẩy, luôn là số nguyên</div>
+    </div>
+    <div class="formula-row">
+      <div class="formula-name">3. Vốn ký quỹ cần dùng</div>
+      <div class="equation">Margin = VOL ÷ L</div>
+      <div class="definition">Ký quỹ lý thuyết cần dùng ở đòn bẩy đã chọn</div>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+  const slInput = document.getElementById('sl');
+  const riskInput = document.getElementById('risk');
+  const capitalInput = document.getElementById('capital');
+  const error = document.getElementById('error');
+  const status = document.getElementById('status');
+
+  const money = value => '$' + value.toLocaleString('en-US', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: value % 1 === 0 ? 0 : 2
+  });
+
+  function calculate() {
+    const sl = Number(slInput.value);
+    const risk = Number(riskInput.value);
+    const capital = Number(capitalInput.value);
+
+    if (!slInput.value || !riskInput.value || !capitalInput.value ||
+        !Number.isFinite(sl) || !Number.isFinite(risk) || !Number.isFinite(capital) ||
+        sl <= 0 || risk <= 0 || capital <= 0) {
+      error.style.display = 'block';
+      status.textContent = '';
+      return;
+    }
+    error.style.display = 'none';
+
+    const position = risk / (sl / 100);
+    // Round leverage UP to an integer so theoretical margin stays <= max capital.
+    const leverage = Math.max(1, Math.ceil(position / capital));
+    const margin = position / leverage;
+    const actualRisk = position * sl / 100;
+
+    document.getElementById('leverage').textContent = leverage + 'x';
+    document.getElementById('margin').textContent = money(margin);
+    document.getElementById('position').textContent = money(position);
+    document.getElementById('actualRisk').textContent = money(actualRisk);
+
+    if (position < capital) {
+      status.textContent = 'Vị thế cần ký quỹ ít hơn giới hạn vốn; đòn bẩy đề xuất tối thiểu là 1x.';
+    } else {
+      status.textContent = 'Ký quỹ lý thuyết không vượt vốn tối đa. Nên chừa thêm dư địa cho phí và biến động giá.';
+    }
+  }
+
+  // ===== Lưu giá trị nhập vào cookie (lâu nhất có thể) =====
+  const STORE_KEY = 'psc_inputs';
+  // 400 ngày = mức tối đa mà Chrome/Edge/Safari cho phép với cookie
+  const MAX_AGE = 400 * 24 * 60 * 60;
+
+  function saveState() {
+    const data = JSON.stringify({
+      sl: slInput.value, risk: riskInput.value, capital: capitalInput.value
+    });
+    try {
+      document.cookie = STORE_KEY + '=' + encodeURIComponent(data) +
+        '; max-age=' + MAX_AGE + '; path=/; SameSite=Lax' +
+        (location.protocol === 'https:' ? '; Secure' : '');
+    } catch (e) {}
+    // Dự phòng: mở file trực tiếp (file://) thì cookie thường bị chặn, localStorage vẫn dùng được
+    try { localStorage.setItem(STORE_KEY, data); } catch (e) {}
+  }
+
+  function loadState() {
+    let raw = null;
+    const m = document.cookie.match(new RegExp('(?:^|; )' + STORE_KEY + '=([^;]*)'));
+    if (m) { try { raw = decodeURIComponent(m[1]); } catch (e) {} }
+    if (!raw) { try { raw = localStorage.getItem(STORE_KEY); } catch (e) {} }
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      [[slInput, d.sl], [riskInput, d.risk], [capitalInput, d.capital]].forEach(([el, v]) => {
+        if (v !== undefined && v !== '' && Number.isFinite(Number(v)) && Number(v) > 0) el.value = v;
+      });
+    } catch (e) {}
+  }
+
+  [slInput, riskInput, capitalInput].forEach(input => {
+    const onChange = () => { calculate(); saveState(); };
+    input.addEventListener('input', onChange);
+    input.addEventListener('change', onChange);
+  });
+  loadState();
+  calculate();
+  saveState(); // gia hạn lại thời hạn cookie mỗi lần mở trang
+})();
+</script>
+</body>
+</html>
